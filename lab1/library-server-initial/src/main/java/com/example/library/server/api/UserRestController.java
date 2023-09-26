@@ -27,90 +27,90 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/users")
+@RequestMapping("/v1/users")
 @Validated
 public class UserRestController {
 
-  private final UserService userService;
-  private final UserResourceAssembler userResourceAssembler;
-  private final PasswordEncoder passwordEncoder;
+    private final UserService userService;
+    private final UserResourceAssembler userResourceAssembler;
+    private final PasswordEncoder passwordEncoder;
 
-  @Autowired
-  public UserRestController(UserService userService, UserResourceAssembler userResourceAssembler, PasswordEncoder passwordEncoder) {
-    this.userService = userService;
-    this.userResourceAssembler = userResourceAssembler;
-    this.passwordEncoder = passwordEncoder;
-  }
+    @Autowired
+    public UserRestController(UserService userService, UserResourceAssembler userResourceAssembler, PasswordEncoder passwordEncoder) {
+        this.userService = userService;
+        this.userResourceAssembler = userResourceAssembler;
+        this.passwordEncoder = passwordEncoder;
+    }
 
-  @ResponseStatus(HttpStatus.OK)
-  @GetMapping
-  public List<UserResource> getAllUsers() {
-    return userService.findAll().stream()
-        .map(userResourceAssembler::toModel)
-        .collect(Collectors.toList());
-  }
+    @ResponseStatus(HttpStatus.OK)
+    @GetMapping
+    public List<UserResource> getAllUsers() {
+        return userService.findAll().stream()
+                .map(userResourceAssembler::toModel)
+                .collect(Collectors.toList());
+    }
 
-  @GetMapping("/{userId}")
-  public ResponseEntity<UserResource> getUser(@PathVariable("userId") UUID userId) {
-    return userService
-        .findByIdentifier(userId)
-        .map(u -> ResponseEntity.ok(userResourceAssembler.toModel(u)))
-        .orElse(ResponseEntity.notFound().build());
-  }
+    @GetMapping("/{userId}")
+    public ResponseEntity<UserResource> getUser(@PathVariable("userId") UUID userId) {
+        return userService
+                .findByIdentifier(userId)
+                .map(u -> ResponseEntity.ok(userResourceAssembler.toModel(u)))
+                .orElse(ResponseEntity.notFound().build());
+    }
 
-  @ResponseStatus(HttpStatus.NO_CONTENT)
-  @DeleteMapping("/{userId}")
-  public void deleteUser(@PathVariable("userId") UUID userId) {
-    userService.deleteByIdentifier(userId);
-  }
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    @DeleteMapping("/{userId}")
+    public void deleteUser(@PathVariable("userId") UUID userId) {
+        userService.deleteByIdentifier(userId);
+    }
 
-  @PostMapping
-  public ResponseEntity<UserResource> createUser(
-      @RequestBody ModifyingUserResource modifyingUserResource) {
-    User user =
-        new User(
-            modifyingUserResource.getIdentifier(),
-            modifyingUserResource.getEmail(),
-            passwordEncoder.encode(modifyingUserResource.getPassword()),
-            modifyingUserResource.getFirstName(),
-            modifyingUserResource.getLastName(),
-            modifyingUserResource.getRoles().stream().map(Enum::name).collect(Collectors.toList()));
-    UUID identifier = userService.create(user);
+    @PostMapping
+    public ResponseEntity<UserResource> createUser(
+            @RequestBody ModifyingUserResource modifyingUserResource) {
+        User user =
+                new User(
+                        modifyingUserResource.getIdentifier(),
+                        modifyingUserResource.getEmail(),
+                        passwordEncoder.encode(modifyingUserResource.getPassword()),
+                        modifyingUserResource.getFirstName(),
+                        modifyingUserResource.getLastName(),
+                        modifyingUserResource.getRoles().stream().map(Enum::name).collect(Collectors.toList()));
+        UUID identifier = userService.create(user);
 
-    return userService
-        .findByIdentifier(identifier)
-        .map(
-            u -> {
-              URI location =
-                  ServletUriComponentsBuilder.fromCurrentContextPath()
-                      .path("/users/{userId}")
-                      .buildAndExpand(u.getIdentifier())
-                      .toUri();
-              UserResource userResource = userResourceAssembler.toModel(u);
-              return ResponseEntity.created(location).body(userResource);
-            })
-        .orElse(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
-  }
+        return userService
+                .findByIdentifier(identifier)
+                .map(
+                        u -> {
+                            URI location =
+                                    ServletUriComponentsBuilder.fromCurrentContextPath()
+                                            .path("/users/{userId}")
+                                            .buildAndExpand(u.getIdentifier())
+                                            .toUri();
+                            UserResource userResource = userResourceAssembler.toModel(u);
+                            return ResponseEntity.created(location).body(userResource);
+                        })
+                .orElse(ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build());
+    }
 
-  @PutMapping("/{userId}")
-  public ResponseEntity<UserResource> updateUser(
-      @PathVariable("userId") UUID userIdentifier,
-      @RequestBody ModifyingUserResource modifyingUserResource) {
-    return userService
-        .findByIdentifier(userIdentifier)
-        .map(
-            u -> {
-              u.setEmail(modifyingUserResource.getEmail());
-              u.setFirstName(modifyingUserResource.getFirstName());
-              u.setLastName(modifyingUserResource.getLastName());
-              u.setPassword(passwordEncoder.encode(modifyingUserResource.getPassword()));
-              u.setRoles(
-                  modifyingUserResource.getRoles().stream()
-                      .map(Enum::name)
-                      .collect(Collectors.toList()));
-              return ResponseEntity.ok(
-                      userResourceAssembler.toModel(userService.update(u)));
-            })
-        .orElse(ResponseEntity.notFound().build());
-  }
+    @PutMapping("/{userId}")
+    public ResponseEntity<UserResource> updateUser(
+            @PathVariable("userId") UUID userIdentifier,
+            @RequestBody ModifyingUserResource modifyingUserResource) {
+        return userService
+                .findByIdentifier(userIdentifier)
+                .map(
+                        u -> {
+                            u.setEmail(modifyingUserResource.getEmail());
+                            u.setFirstName(modifyingUserResource.getFirstName());
+                            u.setLastName(modifyingUserResource.getLastName());
+                            u.setPassword(passwordEncoder.encode(modifyingUserResource.getPassword()));
+                            u.setRoles(
+                                    modifyingUserResource.getRoles().stream()
+                                            .map(Enum::name)
+                                            .collect(Collectors.toList()));
+                            return ResponseEntity.ok(
+                                    userResourceAssembler.toModel(userService.update(u)));
+                        })
+                .orElse(ResponseEntity.notFound().build());
+    }
 }

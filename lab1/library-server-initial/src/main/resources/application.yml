@@ -6,12 +6,32 @@ management:
   endpoint:
     health:
       show-details: always
+
+springdoc:
+  version: '@springdoc.version@'
+  swagger-ui:
+    oauth:
+      clientId: spa
+      clientSecret: 9584640c-3804-4dcd-997b-93593cfb9ea7
+      scopes: openid profile email
+  show:
+    actuator: true
+  oAuthFlow:
+    authorizationUrl: http://localhost:8080/auth/realms/workshop/protocol/openid-connect/token
+    tokenUrl: http://localhost:8080/auth/realms/workshop/protocol/openid-connect/token
+
 spring:
   jpa:
     open-in-view: false
   jackson:
     date-format: com.fasterxml.jackson.databind.util.StdDateFormat
     default-property-inclusion: non_null
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          jwk-set-uri: http://localhost:8080/auth/realms/workshop/protocol/openid-connect/certs
+          issuer-uri: http://localhost:8080/auth/realms/workshop/
 
 logging:
   level:
